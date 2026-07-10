@@ -132,13 +132,15 @@
       "virtual_best": "Remnic hosted CI, releases, history, migrations, and broad client integrations",
       "agent_recipes_status": "behind",
       "claim_blocker": true,
-      "reason": "Local engineering gates now pass: supervised Qwen start/status/stop and kill-recovery, real 0.1.0 to 0.1.1 upgrade/rollback with unchanged event bytes, clean wheel installs on Python 3.11/3.13/3.14, and full 261-test runs on 3.11 and 3.13. The blocker remains because the uncommitted workspace has no hosted CI result, public release/history, or second physical-machine reproduction.",
+      "reason": "Local engineering gates pass: supervised Qwen recovery, real 0.1.0 to 0.1.1 upgrade/rollback with unchanged event bytes, clean wheel installs on Python 3.11/3.13/3.14, and full 261-test runs on 3.11 and 3.13. Public repository history, release v0.1.1, and hosted CI run 29115605471 on Python 3.11/3.12/3.13 now pass. The blocker remains only because the exact release has no second physical-machine reproduction.",
       "evidence": [
         "ENGINEERING_MATURITY.md",
         "PROJECT_STATUS.md",
         "bin/agent-recipes-qwen-service",
         "bin/verify-upgrade-rollback",
         "tests/test_phase26_engineering_distribution.py",
+        "https://github.com/chnczu-jpg/agent-recipes/actions/runs/29115605471",
+        "https://github.com/chnczu-jpg/agent-recipes/releases/tag/v0.1.1",
         ".recipes_real_tests/sample_project_fresh_agent_behavior_v8/invalid_attempts_v8.json"
       ]
     },
@@ -148,7 +150,7 @@
       "virtual_best": "Cass and TencentDB are smaller than Remnic but still require larger runtimes or external components",
       "agent_recipes_status": "ahead",
       "claim_blocker": false,
-      "reason": "The minimal core has zero runtime dependencies, zero required external services, and a 206164-byte Stage O 0.1.1 wheel including the optional Qwen service command.",
+      "reason": "The minimal core has zero runtime dependencies and zero required external services. The public 0.1.1 wheel is 210096 bytes and includes the optional Qwen service command.",
       "evidence": ["ENGINEERING_BUDGET.json", "ENGINEERING_MATURITY.md"]
     },
     {

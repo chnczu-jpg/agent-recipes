@@ -545,6 +545,22 @@ Next major stage: external distribution proof only. After explicit permission to
 commit/push, run hosted CI on the fixed 0.1.1 artifact; then install the same wheel
 on a second physical environment and compare its hash and smoke receipt.
 
+### Stage P: public repository and hosted distribution
+
+Status: public and hosted-CI portions passed on 2026-07-11; second-machine proof remains open.
+
+- Published `https://github.com/chnczu-jpg/agent-recipes` under MIT with a
+  governed-memory README, contribution guide, security policy, and public topics.
+- GitHub Actions run `29115605471` passed 261 tests, wheel build, and isolated
+  install on Python 3.11, 3.12, and 3.13.
+- Published `v0.1.1`; the 210096-byte wheel has SHA-256
+  `ed0faf74ec9ad757df3bf3bc9dddedd458d128de9d39b1df1aa534dd5b4f315a`,
+  and a fresh GitHub download matched it.
+- The exact release wheel has not yet run on a second physical machine.
+
+Next major stage: second-machine reproduction only. Compare the downloaded
+wheel hash, doctor, governance chain, MCP entrypoint, and Qwen service command.
+
 ## Stop rules
 
 - Do not copy or analyze Cass source without written permission.

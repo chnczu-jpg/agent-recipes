@@ -238,3 +238,18 @@ What is still not proven:
   not a second physical machine.
 - There is no public release or repository history. These remain the final
   narrowed engineering/distribution blocker and cannot be manufactured locally.
+
+## 2026-07-11 public distribution gate
+
+- Public repository: `https://github.com/chnczu-jpg/agent-recipes` under MIT.
+- Hosted CI run `29115605471` passed Python 3.11, 3.12, and 3.13. Every job ran
+  261 tests, built a wheel, and passed isolated wheel smoke.
+- The workflow uses `actions/checkout@v7` and `actions/setup-python@v6`; the
+  earlier Node runtime deprecation warning is no longer present.
+- Public release `v0.1.1` contains a 210096-byte wheel with SHA-256
+  `ed0faf74ec9ad757df3bf3bc9dddedd458d128de9d39b1df1aa534dd5b4f315a`.
+- A fresh download from the release produced the same SHA-256 locally.
+
+Hosted CI, public history, licensing, and downloadable distribution are now
+proven. A second physical machine has not installed the exact release wheel, so
+the final narrowed engineering/distribution blocker remains open.
