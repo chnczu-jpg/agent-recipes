@@ -211,7 +211,7 @@
       "host_and_client_integration_breadth",
       "recoverable_background_pipeline"
     ],
-    "allowed_claim": "Agent Recipes has a local narrow lead in governance and execution safety; fixed fresh-agent and recall gates pass; local 0.1.1 service recovery, upgrade/rollback, and multi-Python distribution gates pass. Hosted CI and second-machine evidence still block the narrowed superiority claim.",
+    "allowed_claim": "Agent Recipes has a narrow lead in governance and execution safety; fixed fresh-agent and recall gates pass; public releases, hosted multi-Python CI, service recovery, and upgrade/rollback pass. Only second physical-machine evidence still blocks the narrowed superiority claim.",
     "forbidden_claims": [
       "Agent Recipes has surpassed Cass, Remnic, and TencentDB Agent Memory combined.",
       "The 6/9 internal gate count is a three-repository superiority score.",
@@ -220,7 +220,7 @@
     ]
   },
   "next_order": [
-    "hosted_ci_and_second_physical_environment",
+    "second_physical_environment",
     "optional_overall_scope_decision"
   ]
 }

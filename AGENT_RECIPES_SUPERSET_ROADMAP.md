@@ -580,6 +580,8 @@ Status: implemented and hosted-CI verified on 2026-07-11.
   a fixed same-case feedback benchmark compares both contracts.
 - Hosted CI `29120637235` passed Python 3.11/3.12/3.13 with 266 tests, wheel
   builds, and isolated install smoke in every job.
+- Public `v0.2.0` release is live and its freshly downloaded wheel matches the
+  recorded SHA-256.
 
 Next major stage: hybrid retrieval, conflict detection, and recommendation explanations.
 

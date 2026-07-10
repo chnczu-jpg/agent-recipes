@@ -52,7 +52,7 @@ class ThreeRepoCompetitiveScorecardTest(unittest.TestCase):
         engineering = dimensions["engineering_maturity_and_distribution"]
         self.assertIn("upgrade/rollback", engineering["reason"])
         self.assertIn("second physical-machine", engineering["reason"])
-        self.assertIn("hosted_ci_and_second_physical_environment", scorecard["next_order"])
+        self.assertIn("second_physical_environment", scorecard["next_order"])
 
     def test_virtual_best_rows_cannot_be_reduced_to_points(self):
         scorecard = self.load_scorecard()
