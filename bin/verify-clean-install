@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 1 ]]; then
+  echo "usage: verify-clean-install /path/to/agent_recipes_local-*.whl" >&2
+  exit 2
+fi
+
+wheel_path="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+python_bin="${PYTHON_BIN:-python3}"
+wheel_max_bytes=262144
+wheel_bytes="$(wc -c <"$wheel_path" | tr -d ' ')"
+if (( wheel_bytes > wheel_max_bytes )); then
+  echo "wheel exceeds lightweight budget: ${wheel_bytes} > ${wheel_max_bytes}" >&2
+  exit 3
+fi
+work_dir="$(mktemp -d)"
+cleanup() {
+  rm -rf "$work_dir"
+}
+trap cleanup EXIT
+
+"$python_bin" -m venv "$work_dir/venv"
+"$work_dir/venv/bin/python" -m pip install --no-deps "$wheel_path" >/dev/null
+test -x "$work_dir/venv/bin/agent-recipes-qwen-service"
+
+project_dir="$work_dir/project"
+mkdir -p "$project_dir"
+cd "$work_dir"
+
+"$work_dir/venv/bin/agent-recipes" init --project "$project_dir" --json >"$work_dir/init.json"
+"$work_dir/venv/bin/agent-recipes" migration-status --project "$project_dir" --json >"$work_dir/migration.json"
+"$work_dir/venv/bin/agent-recipes" capture \
+  --type correction \
+  --text "isolated wheel alpha beta requires exact lock" \
+  --project "$project_dir" \
+  --json >"$work_dir/capture.json"
+"$work_dir/venv/bin/agent-recipes" compile --project "$project_dir" --json >"$work_dir/compile.json"
+review_id="$("$work_dir/venv/bin/python" -c 'import json,sys; print(json.load(open(sys.argv[1]))["created"][0]["review_id"])' "$work_dir/compile.json")"
+"$work_dir/venv/bin/agent-recipes" review --accept "$review_id" --project "$project_dir" --json >"$work_dir/review.json"
+recipe_id="$("$work_dir/venv/bin/python" -c 'import json,sys; print(json.load(open(sys.argv[1]))["recipe_id"])' "$work_dir/review.json")"
+"$work_dir/venv/bin/agent-recipes" lookup \
+  "isolated wheel alpha beta requires exact lock" \
+  --strict \
+  --project "$project_dir" \
+  --json >"$work_dir/lookup.json"
+"$work_dir/venv/bin/agent-recipes" lock \
+  --recipe "$recipe_id" \
+  --query "isolated wheel alpha beta requires exact lock" \
+  --task "clean install smoke" \
+  --project "$project_dir" \
+  --json >"$work_dir/lock.json"
+lock_id="$("$work_dir/venv/bin/python" -c 'import json,sys; print(json.load(open(sys.argv[1]))["lock"]["lock_id"])' "$work_dir/lock.json")"
+"$work_dir/venv/bin/agent-recipes" capture \
+  --type success \
+  --text "isolated wheel chain completed" \
+  --lock "$lock_id" \
+  --project "$project_dir" \
+  --json >"$work_dir/success.json"
+"$work_dir/venv/bin/agent-recipes" doctor --project "$project_dir" --json >"$work_dir/doctor.json"
+"$work_dir/venv/bin/agent-recipes" mcp \
+  --tool doctor \
+  --arguments-json "{\"project\":\"$project_dir\"}" \
+  --project "$project_dir" \
+  --json >"$work_dir/mcp_doctor.json"
+
+"$work_dir/venv/bin/python" - "$work_dir" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+init = json.loads((root / "init.json").read_text(encoding="utf-8"))
+migration = json.loads((root / "migration.json").read_text(encoding="utf-8"))
+doctor = json.loads((root / "doctor.json").read_text(encoding="utf-8"))
+mcp_doctor = json.loads((root / "mcp_doctor.json").read_text(encoding="utf-8"))
+events = [json.loads(line) for line in (root / "project" / ".recipes" / "events.jsonl").read_text(encoding="utf-8").splitlines()]
+event_types = {event["event_type"] for event in events}
+assert init["ok"] is True
+assert migration["schema"]["state"] == "current"
+assert doctor["status"] == "ok"
+assert {"project_initialized", "capture", "candidate_compiled", "review_decided", "lock_created"} <= event_types
+assert sum(1 for event in events if event["event_type"] == "capture") == 2
+assert mcp_doctor["status"] == "ok"
+assert mcp_doctor["transport"] == "mcp"
+print(json.dumps({
+    "ok": True,
+    "installed_from_wheel": True,
+    "wheel_budget_passed": True,
+    "full_governance_chain": True,
+    "mcp_entrypoint": True,
+    "qwen_service_entrypoint": True,
+    "project_schema": migration["schema"]["installed_version"],
+    "doctor_status": doctor["status"],
+    "event_count": doctor["summary"]["events"],
+    "event_types": sorted(event_types),
+    "python": sys.version.split()[0],
+}, sort_keys=True))
+PY

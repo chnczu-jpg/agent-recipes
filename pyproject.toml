@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-recipes-local"
+version = "0.1.1"
+description = "Local-first governed recipes for coding agents"
+requires-python = ">=3.11"
+dependencies = []
+license = { file = "LICENSE" }
+authors = [{ name = "Agent Recipes contributors" }]
+keywords = ["ai-agents", "procedural-memory", "mcp", "agent-memory"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/chnczu-jpg/agent-recipes"
+Repository = "https://github.com/chnczu-jpg/agent-recipes"
+Issues = "https://github.com/chnczu-jpg/agent-recipes/issues"
+
+[project.scripts]
+agent-recipes = "agent_recipes.cli:main"
+
+[tool.setuptools]
+script-files = ["bin/agent-recipes-qwen-service"]
+
+[tool.setuptools.package-data]
+agent_recipes = ["OPEN_SOURCE_README.md"]
+
+[tool.setuptools.packages.find]
+include = ["agent_recipes*"]

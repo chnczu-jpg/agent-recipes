@@ -1,0 +1,231 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shutil
+import signal
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def read_json(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def write_json(path: Path, value: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temporary, path)
+
+
+def emit(payload: dict[str, Any], code: int = 0) -> None:
+    print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+    raise SystemExit(code)
+
+
+def process_command(pid: int) -> str:
+    result = subprocess.run(
+        ["ps", "-p", str(pid), "-o", "command="],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def process_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except (ProcessLookupError, PermissionError, OSError):
+        return False
+    return True
+
+
+def process_owned(pid: int, state: dict[str, Any]) -> bool:
+    command = process_command(pid)
+    expected = [
+        str(state.get("server_path") or ""),
+        str(state.get("model_path") or ""),
+        f"--port {state.get('port')}",
+        "--embedding",
+    ]
+    return bool(command) and all(item and item in command for item in expected)
+
+
+def health_url(port: int) -> str:
+    return f"http://127.0.0.1:{port}/health"
+
+
+def healthy(port: int, timeout: float = 1.0) -> bool:
+    try:
+        with urllib.request.urlopen(health_url(port), timeout=timeout) as response:
+            return 200 <= response.status < 300
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return False
+
+
+def service_status(state_path: Path) -> dict[str, Any]:
+    state = read_json(state_path)
+    try:
+        pid = int(state.get("pid") or 0)
+        port = int(state.get("port") or 0)
+    except (TypeError, ValueError):
+        pid, port = 0, 0
+    alive = pid > 0 and process_alive(pid)
+    owned = alive and process_owned(pid, state)
+    is_healthy = owned and port > 0 and healthy(port)
+    return {
+        **state,
+        "action": "embedding-service status",
+        "ok": bool(is_healthy),
+        "running": bool(alive and owned),
+        "healthy": bool(is_healthy),
+        "ownership_verified": bool(owned),
+        "pid_reused_or_mismatched": bool(alive and not owned),
+        "checked_at": now_iso(),
+        "claim_status": {
+            "verified": ["已检查项目记录的 Qwen 服务 PID、命令归属和 loopback health。"],
+            "missing_evidence": [] if is_healthy else ["项目 Qwen 服务当前不可健康调用。"],
+            "cannot_claim": ["不能说服务健康就代表 embedding 召回质量通过。"],
+        },
+    }
+
+
+def stop_service(state_path: Path, *, quiet: bool = False) -> dict[str, Any]:
+    status = service_status(state_path)
+    pid = int(status.get("pid") or 0)
+    if not pid or not process_alive(pid):
+        result = {**status, "action": "embedding-service stop", "ok": True, "running": False, "idempotency_status": "unchanged"}
+        if not quiet:
+            emit(result)
+        return result
+    if not status["ownership_verified"]:
+        result = {
+            **status,
+            "action": "embedding-service stop",
+            "ok": False,
+            "error": "recorded PID is not the project-owned Qwen process; refusing to signal it",
+        }
+        if not quiet:
+            emit(result, 1)
+        raise RuntimeError(result["error"])
+    os.kill(pid, signal.SIGTERM)
+    deadline = time.monotonic() + 5.0
+    while process_alive(pid) and time.monotonic() < deadline:
+        time.sleep(0.05)
+    if process_alive(pid):
+        os.kill(pid, signal.SIGKILL)
+    state = read_json(state_path)
+    state.update({"pid": None, "stopped_at": now_iso(), "last_stop_signal": "SIGTERM"})
+    write_json(state_path, state)
+    result = {**service_status(state_path), "action": "embedding-service stop", "ok": True, "running": False, "idempotency_status": "created"}
+    if not quiet:
+        emit(result)
+    return result
+
+
+def resolve_server(value: str | None) -> Path:
+    candidate = value or shutil.which("llama-server")
+    if not candidate:
+        emit({"ok": False, "action": "embedding-service start", "error": "llama-server not found"}, 1)
+    path = Path(candidate).expanduser().resolve()
+    if not path.is_file() or not os.access(path, os.X_OK):
+        emit({"ok": False, "action": "embedding-service start", "error": f"llama-server is not executable: {path}"}, 1)
+    return path
+
+
+def start_service(args: argparse.Namespace, state_path: Path) -> None:
+    current = service_status(state_path)
+    if current["healthy"]:
+        emit({**current, "action": "embedding-service start", "idempotency_status": "unchanged"})
+    if current.get("pid_reused_or_mismatched"):
+        emit({**current, "action": "embedding-service start", "error": "recorded PID belongs to another process"}, 1)
+    server = resolve_server(args.server)
+    model_value = args.model or os.environ.get("AGENT_RECIPES_QWEN_MODEL") or current.get("model_path")
+    if not model_value:
+        emit({"ok": False, "action": "embedding-service start", "error": "model path required via --model or AGENT_RECIPES_QWEN_MODEL"}, 1)
+    model = Path(str(model_value)).expanduser().resolve()
+    if not model.is_file():
+        emit({"ok": False, "action": "embedding-service start", "error": f"model file missing: {model}"}, 1)
+    state_dir = state_path.parent
+    state_dir.mkdir(parents=True, exist_ok=True)
+    log_path = state_dir / "service.log"
+    command = [
+        str(server), "--embedding", "-m", str(model), "--host", "127.0.0.1",
+        "--port", str(args.port), "--alias", args.alias, "--parallel", "1",
+        "--batch-size", "2048", "--ubatch-size", "2048",
+    ]
+    log = log_path.open("ab", buffering=0)
+    process = subprocess.Popen(
+        command,
+        stdin=subprocess.DEVNULL,
+        stdout=log,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+    log.close()
+    state = {
+        "pid": process.pid,
+        "server_path": str(server),
+        "model_path": str(model),
+        "port": args.port,
+        "alias": args.alias,
+        "command": command,
+        "log_path": str(log_path),
+        "started_at": now_iso(),
+    }
+    write_json(state_path, state)
+    deadline = time.monotonic() + args.timeout
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            state.update({"pid": None, "failed_at": now_iso(), "exit_code": process.returncode})
+            write_json(state_path, state)
+            emit({"ok": False, "action": "embedding-service start", "error": "llama-server exited before health check", "state": state}, 1)
+        if healthy(args.port):
+            result = service_status(state_path)
+            emit({**result, "action": "embedding-service start", "idempotency_status": "created"})
+        time.sleep(0.1)
+    stop_service(state_path, quiet=True)
+    emit({"ok": False, "action": "embedding-service start", "error": "health check timed out", "log_path": str(log_path)}, 1)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(prog="agent-recipes-qwen-service")
+    parser.add_argument("action", choices=["start", "status", "stop", "restart"])
+    parser.add_argument("--project", default=".")
+    parser.add_argument("--model")
+    parser.add_argument("--server")
+    parser.add_argument("--port", type=int, default=18080)
+    parser.add_argument("--alias", default="qwen3-embedding:0.6b")
+    parser.add_argument("--timeout", type=float, default=30.0)
+    args = parser.parse_args()
+    project = Path(args.project).expanduser().resolve()
+    state_path = project / ".recipes" / "embeddings" / "qwen3" / "service" / "state.json"
+    if args.action == "status":
+        emit(service_status(state_path), 0 if service_status(state_path)["ok"] else 1)
+    if args.action == "stop":
+        stop_service(state_path)
+    if args.action == "restart":
+        stop_service(state_path, quiet=True)
+    start_service(args, state_path)
+
+
+if __name__ == "__main__":
+    main()

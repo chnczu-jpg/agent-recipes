@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 2 ]]; then
+  echo "usage: verify-upgrade-rollback /path/to/baseline.whl /path/to/candidate.whl" >&2
+  exit 2
+fi
+
+python_bin="${PYTHON_BIN:-python3}"
+baseline="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+candidate="$(cd "$(dirname "$2")" && pwd)/$(basename "$2")"
+work_dir="$(mktemp -d)"
+cleanup() { rm -rf "$work_dir"; }
+trap cleanup EXIT
+
+"$python_bin" -m venv "$work_dir/venv"
+python="$work_dir/venv/bin/python"
+cli="$work_dir/venv/bin/agent-recipes"
+project="$work_dir/project"
+mkdir -p "$project"
+cd "$work_dir"
+
+install_wheel() {
+  "$python" -m pip install --quiet --no-deps --force-reinstall "$1"
+}
+package_version() {
+  "$python" -c 'import importlib.metadata; print(importlib.metadata.version("agent-recipes-local"))'
+}
+events_hash() {
+  "$python" -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest())' "$project/.recipes/events.jsonl"
+}
+
+install_wheel "$baseline"
+baseline_version="$(package_version)"
+"$cli" init --project "$project" --json > "$work_dir/init.json"
+"$cli" capture --type correction --text "upgrade rollback alpha beta exact review" --project "$project" --json > "$work_dir/capture.json"
+"$cli" compile --project "$project" --json > "$work_dir/compile.json"
+review_id="$("$python" -c 'import json,sys; print(json.load(open(sys.argv[1]))["created"][0]["review_id"])' "$work_dir/compile.json")"
+"$cli" review --accept "$review_id" --project "$project" --json > "$work_dir/review.json"
+before_hash="$(events_hash)"
+
+install_wheel "$candidate"
+candidate_version="$(package_version)"
+"$cli" migration-status --project "$project" --json > "$work_dir/upgrade_migration.json"
+"$cli" doctor --project "$project" --json > "$work_dir/upgrade_doctor.json"
+upgrade_hash="$(events_hash)"
+
+install_wheel "$baseline"
+rollback_version="$(package_version)"
+"$cli" doctor --project "$project" --json > "$work_dir/rollback_doctor.json"
+rollback_hash="$(events_hash)"
+
+install_wheel "$candidate"
+final_version="$(package_version)"
+"$cli" doctor --project "$project" --json > "$work_dir/final_doctor.json"
+final_hash="$(events_hash)"
+
+"$python" - "$work_dir" "$baseline_version" "$candidate_version" "$rollback_version" "$final_version" "$before_hash" "$upgrade_hash" "$rollback_hash" "$final_hash" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+baseline, candidate, rollback, final = sys.argv[2:6]
+hashes = sys.argv[6:10]
+upgrade = json.loads((root / "upgrade_doctor.json").read_text())
+rollback_doctor = json.loads((root / "rollback_doctor.json").read_text())
+final_doctor = json.loads((root / "final_doctor.json").read_text())
+checks = {
+    "versions_differ": baseline != candidate,
+    "rollback_version_restored": rollback == baseline,
+    "candidate_version_restored": final == candidate,
+    "event_log_unchanged": len(set(hashes)) == 1,
+    "all_doctors_ok": upgrade["status"] == rollback_doctor["status"] == final_doctor["status"] == "ok",
+}
+payload = {
+    "ok": all(checks.values()),
+    "baseline_version": baseline,
+    "candidate_version": candidate,
+    "rollback_version": rollback,
+    "final_version": final,
+    "event_hashes": list(hashes),
+    "upgrade_doctor": upgrade["status"],
+    "rollback_doctor": rollback_doctor["status"],
+    "final_doctor": final_doctor["status"],
+    "python": sys.version.split()[0],
+    "checks": checks,
+}
+print(json.dumps(payload, sort_keys=True))
+raise SystemExit(0 if payload["ok"] else 1)
+PY

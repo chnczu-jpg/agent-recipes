@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "audited_at": "2026-07-11",
+  "comparison_target": "Cass, Remnic, and TencentDB Agent Memory virtual-best capability envelope",
+  "scoring_policy": {
+    "points_are_forbidden": true,
+    "rule": "Each row uses the strongest verified upstream capability. One hard blocker cannot be cancelled by wins elsewhere.",
+    "narrowed_claim": "Agent Recipes is stronger for safe, review-gated, executable experience reuse.",
+    "overall_claim": "Agent Recipes is stronger across every memory, compression, integration, recovery, governance, and execution capability."
+  },
+  "upstreams": [
+    {
+      "id": "remnic",
+      "commit": "019518b7ba11e9582484a147420c92f387b863c6",
+      "local_checkout": "references/upstream/remnic",
+      "license": "MIT",
+      "evidence_level": "pinned_source_and_remote_ci_reviewed",
+      "local_full_test": "not_run"
+    },
+    {
+      "id": "cass",
+      "commit": "5cefdb30ed94a06f6b2eafcad5998f5933e6528b",
+      "local_checkout": null,
+      "license": "MIT with OpenAI/Anthropic restriction",
+      "evidence_level": "existing_audit_only_no_new_source_access",
+      "local_full_test": "prohibited_by_license_boundary"
+    },
+    {
+      "id": "tencentdb_agent_memory",
+      "commit": "4339e63650920871eb0e8888083a1779d114e3ae",
+      "local_checkout": "references/upstream/tencentdb-agent-memory",
+      "license": "MIT",
+      "evidence_level": "pinned_source_and_local_test",
+      "local_full_test": "67_of_67_passed"
+    }
+  ],
+  "status_values": ["ahead", "parity", "behind", "unproven", "not_comparable"],
+  "dimensions": [
+    {
+      "id": "source_to_governed_candidate",
+      "scope": "narrowed",
+      "virtual_best": "Remnic procedural mining plus Cass reflection plus TencentDB layered extraction",
+      "agent_recipes_status": "parity",
+      "claim_blocker": false,
+      "reason": "Agent Recipes handles corrections, courses, artifacts, and run evidence through cards and review-gated patch drafts; the fixed 19-project cohort passed, but arbitrary-domain completeness is not proven.",
+      "evidence": ["learning_quality_2d8284e34e81", "AGENT_RECIPES_PLAN.md"]
+    },
+    {
+      "id": "candidate_isolation_and_human_promotion",
+      "scope": "narrowed",
+      "virtual_best": "Remnic review queue; Cass candidate maturity; TencentDB automatic memory writes",
+      "agent_recipes_status": "ahead",
+      "claim_blocker": false,
+      "reason": "Candidate cards and patch drafts cannot become formal recipes without explicit review accept.",
+      "evidence": ["tests/test_phase2.py", "tests/test_phase23_learning_quality_summary.py"]
+    },
+    {
+      "id": "strict_applicability_and_no_match",
+      "scope": "narrowed",
+      "virtual_best": "Cass minimum relevance threshold",
+      "agent_recipes_status": "ahead",
+      "claim_blocker": false,
+      "reason": "Strict lookup can refuse weak matches and is coupled to exact active recipe selection and lock creation.",
+      "evidence": ["agent_recipes/execution.py", "tests/test_phase22_execution_module.py"]
+    },
+    {
+      "id": "exact_execution_lock",
+      "scope": "narrowed",
+      "virtual_best": "No upstream equivalent found",
+      "agent_recipes_status": "ahead",
+      "claim_blocker": false,
+      "reason": "Execution binds recipe id, version, hash, claim limits, and finite expiry before high-risk work.",
+      "evidence": ["agent_recipes/execution.py", "tests/test_phase22_execution_module.py"]
+    },
+    {
+      "id": "outcome_feedback_and_attribution",
+      "scope": "narrowed",
+      "virtual_best": "Cass richer feedback and maturity plus Remnic trajectory statistics",
+      "agent_recipes_status": "parity",
+      "claim_blocker": false,
+      "reason": "Cass is richer in feedback types; Agent Recipes is stricter in exact lock/version/hash attribution and non-enforcement of legacy inference.",
+      "evidence": ["agent_recipes/outcome.py", "tests/test_phase21_outcome_module.py"]
+    },
+    {
+      "id": "recipe_lifecycle_safety",
+      "scope": "narrowed",
+      "virtual_best": "Remnic snapshots, revert, tombstone, revocation, and consolidation undo",
+      "agent_recipes_status": "parity",
+      "claim_blocker": false,
+      "reason": "Agent Recipes matches the narrowed recipe need for tombstone, revocation, anti-resurrection, retirement, and active-version selection; it does not match Remnic's broader memory snapshot system.",
+      "evidence": ["agent_recipes/lifecycle.py", "tests/test_phase20_lifecycle_module.py"]
+    },
+    {
+      "id": "provenance_and_claim_boundaries",
+      "scope": "narrowed",
+      "virtual_best": "Remnic provenance and TencentDB layered source references",
+      "agent_recipes_status": "ahead",
+      "claim_blocker": false,
+      "reason": "Source trace, cannot-claim, quarantine, evidence packs, and formal-recipe boundaries are machine-readable and enforced.",
+      "evidence": ["tests/test_phase17_evidence_hardening.py", "doctor_4d52a703d6aa"]
+    },
+    {
+      "id": "fresh_agent_production_effect",
+      "scope": "narrowed",
+      "virtual_best": "No same-task cross-project benchmark is currently available",
+      "agent_recipes_status": "ahead",
+      "claim_blocker": false,
+      "reason": "After the failed V5 cohort and the review-gated PIP repair, the predefined unseen V8 gate passed with 5 recipe wins, 1 tie, 0 baseline wins, 0 wrong locks, and a verified no-match. This is a local narrow production-effect result, not universal task superiority.",
+      "evidence": [
+        ".recipes_real_tests/sample_project_fresh_agent_behavior_v5/blind_judgments_v5.json",
+        ".recipes_real_tests/sample_project_fresh_agent_behavior_v5/fresh_agent_pip_learning_retest_v6_v7.json",
+        ".recipes_real_tests/sample_project_fresh_agent_behavior_v8/blind_judgments_v8.json",
+        "REAL_LANDING_GAP_MAP.md"
+      ]
+    },
+    {
+      "id": "recall_quality_at_scale",
+      "scope": "narrowed",
+      "virtual_best": "Remnic multi-index recall plus TencentDB layered recall",
+      "agent_recipes_status": "parity",
+      "claim_blocker": false,
+      "reason": "The fixed 24-recipe SampleProject cohort retained 227 source rows but scored 111 unique expectations. Core passed 55/55 positives with zero false recalls; Cognee and Graphiti projections passed 53/55 with 3.6% false recall; live local Qwen passed 47/55 with 6.3% false recall and about 31 ms mean query latency. All 15 pure no-match cases were rejected. This closes the fixed local comparison gap, not native Graphiti/Cognee or arbitrary-domain quality.",
+      "evidence": [
+        ".recipes_real_tests/sample_project_large_scale_quality_baseline_v1/.recipes/reports/recall_quality_d032c112963d.json",
+        "agent_recipes/recall_quality.py",
+        "tests/test_phase25_recall_quality.py"
+      ]
+    },
+    {
+      "id": "engineering_maturity_and_distribution",
+      "scope": "narrowed",
+      "virtual_best": "Remnic hosted CI, releases, history, migrations, and broad client integrations",
+      "agent_recipes_status": "behind",
+      "claim_blocker": true,
+      "reason": "Local engineering gates now pass: supervised Qwen start/status/stop and kill-recovery, real 0.1.0 to 0.1.1 upgrade/rollback with unchanged event bytes, clean wheel installs on Python 3.11/3.13/3.14, and full 261-test runs on 3.11 and 3.13. The blocker remains because the uncommitted workspace has no hosted CI result, public release/history, or second physical-machine reproduction.",
+      "evidence": [
+        "ENGINEERING_MATURITY.md",
+        "PROJECT_STATUS.md",
+        "bin/agent-recipes-qwen-service",
+        "bin/verify-upgrade-rollback",
+        "tests/test_phase26_engineering_distribution.py",
+        ".recipes_real_tests/sample_project_fresh_agent_behavior_v8/invalid_attempts_v8.json"
+      ]
+    },
+    {
+      "id": "lightweight_local_core",
+      "scope": "narrowed",
+      "virtual_best": "Cass and TencentDB are smaller than Remnic but still require larger runtimes or external components",
+      "agent_recipes_status": "ahead",
+      "claim_blocker": false,
+      "reason": "The minimal core has zero runtime dependencies, zero required external services, and a 206164-byte Stage O 0.1.1 wheel including the optional Qwen service command.",
+      "evidence": ["ENGINEERING_BUDGET.json", "ENGINEERING_MATURITY.md"]
+    },
+    {
+      "id": "broad_long_term_conversation_memory",
+      "scope": "overall_only",
+      "virtual_best": "Remnic and TencentDB Agent Memory",
+      "agent_recipes_status": "behind",
+      "claim_blocker": true,
+      "reason": "Agent Recipes intentionally does not rebuild a general conversation-memory platform in its core.",
+      "evidence": ["REMNIC_CASS_REPLACEMENT_AUDIT.md", "TENCENTDB_AGENT_MEMORY_SOURCE_AUDIT.md"]
+    },
+    {
+      "id": "context_compression_and_offload",
+      "scope": "overall_only",
+      "virtual_best": "TencentDB Agent Memory",
+      "agent_recipes_status": "behind",
+      "claim_blocker": true,
+      "reason": "TencentDB has a real layered offload system; Agent Recipes has no equivalent and does not need one in the narrowed core.",
+      "evidence": ["TENCENTDB_AGENT_MEMORY_DEEP_SOURCE_MAP.md"]
+    },
+    {
+      "id": "host_and_client_integration_breadth",
+      "scope": "overall_only",
+      "virtual_best": "Remnic plus TencentDB OpenClaw and Hermes integration",
+      "agent_recipes_status": "behind",
+      "claim_blocker": true,
+      "reason": "Local Codex MCP smoke passes, but broad production host integration is not proven.",
+      "evidence": ["REMNIC_CASS_REPLACEMENT_AUDIT.md", "TENCENTDB_AGENT_MEMORY_SOURCE_AUDIT.md"]
+    },
+    {
+      "id": "recoverable_background_pipeline",
+      "scope": "overall_only",
+      "virtual_best": "TencentDB checkpoints, retries, backup recovery, and degradation",
+      "agent_recipes_status": "behind",
+      "claim_blocker": true,
+      "reason": "Agent Recipes has idempotent events and fail-closed writes, but no equivalent long-running learning scheduler; it will only add one after real interruption evidence.",
+      "evidence": ["TENCENTDB_AGENT_MEMORY_DEEP_SOURCE_MAP.md", "agent_recipes/ledger.py"]
+    },
+    {
+      "id": "license_and_clean_room_boundary",
+      "scope": "boundary",
+      "virtual_best": "Remnic and TencentDB are MIT; Cass is restricted for this agent context",
+      "agent_recipes_status": "not_comparable",
+      "claim_blocker": false,
+      "reason": "Cass remains audit-only and cannot be downloaded, executed, benchmarked, copied, or integrated under the current conservative boundary.",
+      "evidence": ["references/UPSTREAM_SOURCES.md", "THIRD_PARTY_NOTICES.md"]
+    }
+  ],
+  "current_verdict": {
+    "narrowed_superiority_allowed": false,
+    "narrowed_blockers": [
+      "engineering_maturity_and_distribution"
+    ],
+    "overall_superiority_allowed": false,
+    "overall_additional_blockers": [
+      "broad_long_term_conversation_memory",
+      "context_compression_and_offload",
+      "host_and_client_integration_breadth",
+      "recoverable_background_pipeline"
+    ],
+    "allowed_claim": "Agent Recipes has a local narrow lead in governance and execution safety; fixed fresh-agent and recall gates pass; local 0.1.1 service recovery, upgrade/rollback, and multi-Python distribution gates pass. Hosted CI and second-machine evidence still block the narrowed superiority claim.",
+    "forbidden_claims": [
+      "Agent Recipes has surpassed Cass, Remnic, and TencentDB Agent Memory combined.",
+      "The 6/9 internal gate count is a three-repository superiority score.",
+      "One passing V8 cohort proves universal fresh-agent or rendered production quality.",
+      "Three Python environments on one Mac equal a second physical-machine reproduction."
+    ]
+  },
+  "next_order": [
+    "hosted_ci_and_second_physical_environment",
+    "optional_overall_scope_decision"
+  ]
+}

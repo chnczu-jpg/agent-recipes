@@ -1,0 +1,117 @@
+{
+  "action": "readiness",
+  "axes": {
+    "evidence_hardening": {
+      "active_quarantine_count": 0,
+      "affects_core_readiness": false,
+      "authoritative_secret_finding_count": 0,
+      "issue_count": 0,
+      "pre_persistence_redaction": true,
+      "required": true,
+      "secret_finding_count": 0,
+      "status": "ready"
+    },
+    "ledger": {
+      "error_codes": [],
+      "event_count": 4,
+      "required": true,
+      "status": "ready"
+    },
+    "lifecycle": {
+      "error_codes": [],
+      "required": true,
+      "retired_recipe_count": 0,
+      "status": "ready",
+      "tombstone_count": 0
+    },
+    "optional_adapters": {
+      "affects_core_readiness": false,
+      "candidate_only": true,
+      "required": false,
+      "runtime_verified_count": 0,
+      "status": "disabled"
+    },
+    "outcomes": {
+      "attributable_outcome_count": 0,
+      "binding_error_count": 0,
+      "degraded_count": 0,
+      "hard_hold_count": 0,
+      "historical_warning_count": 0,
+      "legacy_inferred_can_enforce": false,
+      "policy_eligible_outcome_count": 0,
+      "recipe_version_count": 1,
+      "required": true,
+      "status": "ready",
+      "unattributed_event_count": 0
+    },
+    "real_client": {
+      "fresh_tool_call_verified": false,
+      "project_config_present": false,
+      "required": false,
+      "status": "disabled"
+    },
+    "recall_boundary": {
+      "active_adapter_count": 0,
+      "affects_core_readiness": false,
+      "all_adapters_disabled": true,
+      "core_requires_recall_adapter": false,
+      "disabled_adapter_count": 3,
+      "required": true,
+      "status": "ready",
+      "violation_count": 0
+    },
+    "recipes": {
+      "active_count": 1,
+      "inactive_count": 0,
+      "required": true,
+      "status": "ready"
+    },
+    "review_queue": {
+      "malformed_count": 0,
+      "pending_count": 0,
+      "required": false,
+      "status": "ready",
+      "total_count": 1
+    }
+  },
+  "claim_status": {
+    "cannot_claim": [
+      "readiness=ready 不等于具体 recipe 适用于当前任务；仍须 strict lookup + lock。",
+      "optional adapter ready 不等于其候选已转成正式 recipe。",
+      "project client config 存在不等于真实 Codex/Claude/Hermes 已加载 MCP。",
+      "readiness 不证明真实任务输出质量或用户验收。"
+    ],
+    "inferred": [],
+    "missing_evidence": [],
+    "verified": [
+      "已分别检查 ledger、lifecycle、formal recipes、outcomes、recall boundary、evidence hardening、review queue、optional adapters 和 project client config。",
+      "readiness overall=ready, realized_mode=core_only。"
+    ]
+  },
+  "contracts": {
+    "authoritative_truth": "hash_chained_events_plus_hash_verified_formal_recipes",
+    "derived_assets_are_authoritative": false,
+    "mutation_policy": "fail_closed",
+    "read_policy": "degrade_with_disclosure"
+  },
+  "ok": true,
+  "overall": "ready",
+  "realized_mode": "core_only",
+  "recommended_action": {
+    "action_id": "lookup-strict",
+    "blocking": false,
+    "command": "./bin/agent-recipes lookup '<task>' --strict --project . --json",
+    "priority": "P2",
+    "reason": "核心可用；下一步应对真实任务做 strict lookup，而不是直接执行。"
+  },
+  "recommended_actions": [
+    {
+      "action_id": "lookup-strict",
+      "blocking": false,
+      "command": "./bin/agent-recipes lookup '<task>' --strict --project . --json",
+      "priority": "P2",
+      "reason": "核心可用；下一步应对真实任务做 strict lookup，而不是直接执行。"
+    }
+  ],
+  "schema_version": "1.3"
+}

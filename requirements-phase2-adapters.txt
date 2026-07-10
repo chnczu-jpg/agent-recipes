@@ -1,0 +1,12 @@
+# Optional Phase 2 external adapters.
+# Install into the project-local .venv, not the system Python.
+markitdown
+docling
+faster-whisper
+whisperx
+scenedetect
+paddleocr
+paddlepaddle
+surya-ocr
+cognee
+graphiti-core

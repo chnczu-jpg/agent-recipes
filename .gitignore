@@ -1,0 +1,10 @@
+.venv/
+.recipes/
+.recipes_real_tests/
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+references/upstream/

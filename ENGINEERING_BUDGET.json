@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "core_max_lines": 15700,
+  "package_python_max_bytes": 975000,
+  "wheel_max_bytes": 262144,
+  "runtime_dependency_count": 0,
+  "required_external_service_count": 0,
+  "cold_cli_median_max_ms": 150,
+  "stage_n_budget_decision": {
+    "previous_core_max_lines": 15610,
+    "previous_package_python_max_bytes": 950000,
+    "measured_core_lines": 15687,
+    "measured_package_python_bytes": 972748,
+    "reason": "Stage N adds one executable same-corpus quality gate, duplicate-resistant scoring, live Qwen evidence, and production no-match enforcement for optional recall adapters.",
+    "constraint": "No further increase is allowed for Stage O; engineering maturity work must hold or reduce these ceilings."
+  },
+  "policy": [
+    "Budgets are ratchets, not targets to fill.",
+    "Optional AI, memory, OCR, ASR, and search dependencies stay outside the minimal core.",
+    "A budget increase requires measured user value and an explicit roadmap decision."
+  ]
+}
