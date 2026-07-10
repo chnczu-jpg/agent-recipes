@@ -1948,7 +1948,7 @@ Stage O 完成本机工程成熟度部分，但不伪造外部证据。项目新
 绿灯和第二台物理环境复现；当前没有提交、推送或公开发布，不能 claim 已关闭。
 ## Competitive Extension 1: cause-specific feedback
 
-Status: implemented locally on 2026-07-11.
+Status: implemented and hosted-CI verified on 2026-07-11.
 
 - Keep `success`, `failure`, and `unknown` as the stable outcome layer.
 - Add cause-specific feedback for retrieval mismatch, execution error, recipe

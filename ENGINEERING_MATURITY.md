@@ -275,6 +275,7 @@ the final narrowed engineering/distribution blocker remains open.
 - Upgrade/rollback 0.1.1 -> 0.2.0 -> 0.1.1 -> 0.2.0 preserved the exact event
   hash `dfa211f4700ce6ba7708d02233d3d4d4daac791800854c16b48ca8a42789aad2`.
 
-The 77-file sanitized export passed all 266 tests and isolated install. This
-closes competitive extension stage 1 locally; hosted-CI evidence for this change
-is still pending.
+The 77-file sanitized export passed all 266 tests and isolated install. Hosted CI
+run `29120637235` passed Python 3.11, 3.12, and 3.13, including all tests, wheel
+builds, and isolated install smoke. Competitive extension stage 1 is ready for
+the public 0.2.0 release.

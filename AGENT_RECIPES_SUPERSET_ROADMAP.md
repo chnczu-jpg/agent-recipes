@@ -563,7 +563,7 @@ wheel hash, doctor, governance chain, MCP entrypoint, and Qwen service command.
 
 ### Competitive extension 1: richer feedback than generic success/failure
 
-Status: locally implemented on 2026-07-11.
+Status: implemented and hosted-CI verified on 2026-07-11.
 
 - Added 15 cause-specific feedback kinds without replacing the stable
   success/failure/unknown outcome layer.
@@ -578,6 +578,8 @@ Status: locally implemented on 2026-07-11.
   and a real 0.1.1/0.2.0 upgrade-rollback cycle preserved event bytes.
 - Cass still has broader implicit/session feedback. This row remains parity until
   a fixed same-case feedback benchmark compares both contracts.
+- Hosted CI `29120637235` passed Python 3.11/3.12/3.13 with 266 tests, wheel
+  builds, and isolated install smoke in every job.
 
 Next major stage: hybrid retrieval, conflict detection, and recommendation explanations.
 
