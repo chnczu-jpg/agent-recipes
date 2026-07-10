@@ -185,7 +185,7 @@ def client_smoke(project: Path, *, agent: str, scope: str) -> dict[str, Any]:
             "params": {
                 "protocolVersion": MCP_PROTOCOL_VERSION,
                 "capabilities": {},
-                "clientInfo": {"name": "agent-recipes-smoke", "version": "0.1.1"},
+                "clientInfo": {"name": "agent-recipes-smoke", "version": "0.2.0"},
             },
         },
         {"jsonrpc": "2.0", "method": "notifications/initialized"},

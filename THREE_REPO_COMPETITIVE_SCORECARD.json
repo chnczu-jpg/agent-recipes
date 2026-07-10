@@ -78,8 +78,8 @@
       "virtual_best": "Cass richer feedback and maturity plus Remnic trajectory statistics",
       "agent_recipes_status": "parity",
       "claim_blocker": false,
-      "reason": "Cass is richer in feedback types; Agent Recipes is stricter in exact lock/version/hash attribution and non-enforcement of legacy inference.",
-      "evidence": ["agent_recipes/outcome.py", "tests/test_phase21_outcome_module.py"]
+      "reason": "Agent Recipes now has 15 cause-specific kinds, exact lock/version/hash attribution, and a tested boundary that prevents execution or dependency failures from punishing recipes. Cass retains broader session-level and implicit feedback. The narrowed contract remains parity until both run one fixed feedback benchmark.",
+      "evidence": ["agent_recipes/outcome.py", "tests/test_phase21_outcome_module.py", "tests/test_phase27_rich_feedback.py"]
     },
     {
       "id": "recipe_lifecycle_safety",

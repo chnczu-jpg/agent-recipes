@@ -74,7 +74,7 @@ decide what is trusted enough to act on.
 
 ## Verified local baseline
 
-Release `0.1.1` currently has:
+Release line `0.2.x` currently has:
 
 - 261 unit and integration tests passing locally on Python 3.11 and 3.13.
 - Clean wheel installs verified on Python 3.11, 3.13, and 3.14.
@@ -108,7 +108,7 @@ become formal:
 ```bash
 agent-recipes review --accept <candidate-id> --project . --json
 agent-recipes lookup "prepare a release" --strict --project . --json
-agent-recipes lock --recipe <recipe-id> --task "publish v0.1.1" --project . --json
+agent-recipes lock --recipe <recipe-id> --task "publish v0.2.0" --project . --json
 ```
 
 ## Agent integration
@@ -146,6 +146,25 @@ Optional adapter output remains candidate evidence. Availability is not truth,
 and a successful model call is not a successful recipe.
 
 ## Operations
+
+Cause-specific feedback keeps agent mistakes from poisoning recipe quality:
+
+```bash
+agent-recipes capture --type failure \
+  --feedback-kind execution_error \
+  --text "The agent clicked the wrong control." \
+  --lock <lock-id> --project . --json
+
+agent-recipes capture --type failure \
+  --feedback-kind recipe_incorrect \
+  --text "Step three contradicts the current software version." \
+  --lock <lock-id> --project . --json
+```
+
+Retrieval, execution, dependency, recipe, cost, conflict, evidence, and user
+correction feedback remain bound to the exact recipe snapshot. Non-recipe
+failures do not degrade the recipe. No feedback automatically edits or promotes
+a formal recipe.
 
 ```bash
 agent-recipes migration-status --project . --json

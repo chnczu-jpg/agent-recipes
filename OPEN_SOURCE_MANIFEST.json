@@ -13,7 +13,7 @@
     "dist",
     "fixtures"
   ],
-  "exported_at": "2026-07-10T18:36:58Z",
+  "exported_at": "2026-07-10T19:58:59Z",
   "files": [
     ".github/workflows/ci.yml",
     ".gitignore",
@@ -80,6 +80,7 @@
     "tests/test_phase24_three_repo_scorecard.py",
     "tests/test_phase25_recall_quality.py",
     "tests/test_phase26_engineering_distribution.py",
+    "tests/test_phase27_rich_feedback.py",
     "tests/test_phase3.py",
     "tests/test_phase4.py",
     "tests/test_phase5.py",

@@ -12,6 +12,24 @@ OUTCOME_CAPTURE_MAP = {
     "failure": "negative",
     "unknown": "unknown",
 }
+FEEDBACK_KIND_RULES = {
+    "verified_success": ("success", "recipe", True, ""),
+    "partial_success": ("success", "result", True, "review_result"),
+    "generic_failure": ("failure", "recipe", True, "review_recipe"),
+    "retrieval_mismatch": ("failure", "retrieval", False, "review_retrieval"),
+    "execution_error": ("failure", "execution", False, "inspect_execution"),
+    "recipe_incorrect": ("failure", "recipe", True, "review_recipe"),
+    "recipe_outdated": ("failure", "recipe", True, "review_recipe"),
+    "applicability_overreach": ("failure", "retrieval", True, "review_retrieval"),
+    "missing_step": ("failure", "recipe", True, "review_recipe"),
+    "excessive_cost": ("failure", "cost", True, "optimize_cost"),
+    "recipe_conflict": ("failure", "conflict", True, "resolve_conflict"),
+    "user_correction": ("failure", "recipe", True, "review_recipe"),
+    "external_dependency": ("failure", "dependency", False, "inspect_dependency"),
+    "insufficient_evidence": ("unknown", "evidence", True, "collect_evidence"),
+    "evaluation_blocked": ("unknown", "evaluation", True, "unblock_evaluation"),
+}
+DEFAULT_FEEDBACK_KIND = {"success": "verified_success", "failure": "generic_failure", "unknown": "insufficient_evidence"}
 OUTCOME_POLICY = {
     "legacy_inferred_can_enforce": False,
     "explicit_binding_required_for_enforcement": True,
@@ -19,6 +37,7 @@ OUTCOME_POLICY = {
     "hold_after": "3 consecutive policy-eligible failures or >=3 failures at >=60% failure rate",
     "unknown_changes_confidence": False,
     "automatic_recipe_mutation": False,
+    "non_recipe_failures_can_degrade_recipe": False,
 }
 
 
@@ -48,7 +67,15 @@ def outcome_lock_snapshot_hash(lock_id: str, bindings: list[dict[str, Any]]) -> 
     return sha256_json({"lock_id": lock_id, "recipe_bindings": bindings})
 
 
-def explicit_lock_capture_payload(lock: dict[str, Any], lock_id: str, capture_type: str) -> dict[str, Any]:
+def feedback_metadata(capture_type: str, feedback_kind: str | None = None) -> dict[str, Any]:
+    kind = feedback_kind or DEFAULT_FEEDBACK_KIND.get(capture_type)
+    rule = FEEDBACK_KIND_RULES.get(str(kind))
+    if not rule or rule[0] != capture_type:
+        raise RecipesError("AR490", "feedback kind 与 capture type 不兼容。", f"capture_type={capture_type}, feedback_kind={feedback_kind}", "选择与 success/failure/unknown 对应的 feedback kind。")
+    return {"feedback_kind": kind, "feedback_scope": rule[1], "policy_eligible": rule[2], "recommended_action": rule[3]}
+
+
+def explicit_lock_capture_payload(lock: dict[str, Any], lock_id: str, capture_type: str, feedback_kind: str | None = None) -> dict[str, Any]:
     bindings = recipe_bindings_from_lock(lock)
     payload = {
         "recipe_bindings": bindings,
@@ -56,7 +83,9 @@ def explicit_lock_capture_payload(lock: dict[str, Any], lock_id: str, capture_ty
         "lock_snapshot_hash": outcome_lock_snapshot_hash(lock_id, bindings),
     }
     if capture_type in OUTCOME_CAPTURE_MAP:
-        payload.update({"outcome": OUTCOME_CAPTURE_MAP[capture_type], "policy_eligible": True})
+        payload.update({"outcome": OUTCOME_CAPTURE_MAP[capture_type], **feedback_metadata(capture_type, feedback_kind)})
+    elif feedback_kind:
+        feedback_metadata(capture_type, feedback_kind)
     return payload
 
 
@@ -101,7 +130,11 @@ def outcome_quality_state(
                 "recipe_hash": str(binding.get("recipe_hash") or ""),
                 "all_attributable": empty_outcome_counts(),
                 "legacy_inferred": empty_outcome_counts(),
+                "non_policy_explicit": empty_outcome_counts(),
                 "policy_eligible": {**empty_outcome_counts(), "consecutive_negative": 0},
+                "feedback_kind_counts": {},
+                "feedback_scope_counts": {},
+                "_recommended_actions": set(),
                 "_policy_sequence": [],
             }
             rows_by_key[key] = row
@@ -132,6 +165,7 @@ def outcome_quality_state(
         explicit = payload.get("binding_source") == "explicit_lock_snapshot"
         bindings = payload.get("recipe_bindings") if explicit else None
         policy_eligible = explicit and payload.get("policy_eligible") is True
+        metadata = feedback_metadata(capture_type, payload.get("feedback_kind")) if explicit else {}
 
         lock: dict[str, Any] = {}
         if lock_id:
@@ -162,8 +196,8 @@ def outcome_quality_state(
             if payload.get("lock_snapshot_hash") != outcome_lock_snapshot_hash(lock_id, bindings):
                 binding_errors.append(f"explicit outcome lock snapshot hash 不一致：{event_id}")
                 continue
-            if not policy_eligible:
-                binding_errors.append(f"explicit outcome 缺 policy_eligible=true：{event_id}")
+            if not isinstance(payload.get("policy_eligible"), bool) or payload.get("policy_eligible") != metadata["policy_eligible"]:
+                binding_errors.append(f"explicit outcome policy_eligible 与 feedback kind 不一致：{event_id}")
                 continue
         else:
             if not lock:
@@ -181,20 +215,26 @@ def outcome_quality_state(
             all_counts[outcome] += 1
             if outcome != "unknown":
                 all_counts["decisive"] += 1
-            target = row["policy_eligible"] if policy_eligible else row["legacy_inferred"]
+            target = row["policy_eligible"] if policy_eligible else (row["non_policy_explicit"] if explicit else row["legacy_inferred"])
             target[outcome] += 1
             if outcome != "unknown":
                 target["decisive"] += 1
             if policy_eligible:
                 row["_policy_sequence"].append(outcome)
+            if explicit:
+                kind, scope, action = metadata["feedback_kind"], metadata["feedback_scope"], metadata["recommended_action"]
+                row["feedback_kind_counts"][kind] = row["feedback_kind_counts"].get(kind, 0) + 1
+                row["feedback_scope_counts"][scope] = row["feedback_scope_counts"].get(scope, 0) + 1
+                if action:
+                    row["_recommended_actions"].add(action)
 
     rows: list[dict[str, Any]] = []
     for row in rows_by_key.values():
         all_counts = row["all_attributable"]
         policy_counts = row["policy_eligible"]
-        decisive = all_counts["decisive"]
-        positive = all_counts["positive"]
-        negative = all_counts["negative"]
+        decisive = policy_counts["decisive"]
+        positive = policy_counts["positive"]
+        negative = policy_counts["negative"]
         confidence_percent = round(((positive + 1) / (decisive + 2)) * 100) if decisive else 50
         if decisive == 0:
             confidence_band = "untested"
@@ -239,6 +279,7 @@ def outcome_quality_state(
                 and row["legacy_inferred"]["negative"] >= row["legacy_inferred"]["positive"],
                 "enforcement_basis": "explicit_binding_policy_eligible_only",
                 "unknown_changes_confidence": False,
+                "recommended_actions": sorted(row.pop("_recommended_actions")),
             }
         )
         rows.append(row)
@@ -269,7 +310,10 @@ def find_outcome_quality(
         "recipe_hash": recipe_hash_value,
         "all_attributable": empty_outcome_counts(),
         "legacy_inferred": empty_outcome_counts(),
+        "non_policy_explicit": empty_outcome_counts(),
         "policy_eligible": {**empty_outcome_counts(), "consecutive_negative": 0},
+        "feedback_kind_counts": {},
+        "feedback_scope_counts": {},
         "confidence_percent": 50,
         "confidence_band": "untested",
         "maturity": "untested",
@@ -277,11 +321,12 @@ def find_outcome_quality(
         "historical_warning": False,
         "enforcement_basis": "explicit_binding_policy_eligible_only",
         "unknown_changes_confidence": False,
+        "recommended_actions": [],
     }
 
 
-def outcome_quality_summary(rows: list[dict[str, Any]], *, state: dict[str, Any] | None = None) -> dict[str, int]:
-    return {
+def outcome_quality_summary(rows: list[dict[str, Any]], *, state: dict[str, Any] | None = None) -> dict[str, Any]:
+    summary: dict[str, Any] = {
         "recipe_version_count": len(rows),
         "attributable_outcome_count": sum(item["all_attributable"]["positive"] + item["all_attributable"]["negative"] + item["all_attributable"]["unknown"] for item in rows),
         "policy_eligible_outcome_count": sum(item["policy_eligible"]["positive"] + item["policy_eligible"]["negative"] + item["policy_eligible"]["unknown"] for item in rows),
@@ -291,3 +336,12 @@ def outcome_quality_summary(rows: list[dict[str, Any]], *, state: dict[str, Any]
         "binding_error_count": len((state or {}).get("binding_errors", [])),
         "unattributed_event_count": len((state or {}).get("unattributed_events", [])),
     }
+    kinds: dict[str, int] = {}
+    actions: set[str] = set()
+    for row in rows:
+        for kind, count in row.get("feedback_kind_counts", {}).items():
+            kinds[kind] = kinds.get(kind, 0) + count
+        actions.update(row.get("recommended_actions", []))
+    if kinds:
+        summary.update({"feedback_kind_counts": kinds, "recommended_actions": sorted(actions)})
+    return summary

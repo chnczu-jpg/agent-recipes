@@ -239,7 +239,7 @@ def smoke_mcp_command(command: str, args: list[str], *, project: Path) -> dict[s
             "params": {
                 "protocolVersion": MCP_PROTOCOL_VERSION,
                 "capabilities": {},
-                "clientInfo": {"name": "agent-recipes-smoke", "version": "0.1.0"},
+                "clientInfo": {"name": "agent-recipes-smoke", "version": "0.2.0"},
             },
         },
         {"jsonrpc": "2.0", "method": "notifications/initialized"},

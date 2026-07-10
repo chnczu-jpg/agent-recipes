@@ -158,9 +158,11 @@ class Phase26EngineeringDistributionTest(unittest.TestCase):
         clean = (ROOT / "bin" / "verify-clean-install").read_text(encoding="utf-8")
         upgrade = (ROOT / "bin" / "verify-upgrade-rollback").read_text(encoding="utf-8")
 
-        self.assertIn('version = "0.1.1"', pyproject)
+        package_init = (ROOT / "agent_recipes" / "__init__.py").read_text(encoding="utf-8")
+        self.assertIn('version = "0.2.0"', pyproject)
         self.assertIn('script-files = ["bin/agent-recipes-qwen-service"]', pyproject)
-        self.assertIn('"version": "0.1.1"', mcp)
+        self.assertIn('"version": "0.2.0"', mcp)
+        self.assertIn('__version__ = "0.2.0"', package_init)
         self.assertIn('PYTHON_BIN', clean)
         self.assertIn('rollback_doctor', upgrade)
         self.assertIn('event_log_unchanged', upgrade)

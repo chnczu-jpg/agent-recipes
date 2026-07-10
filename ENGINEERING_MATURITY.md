@@ -253,3 +253,28 @@ What is still not proven:
 Hosted CI, public history, licensing, and downloadable distribution are now
 proven. A second physical machine has not installed the exact release wheel, so
 the final narrowed engineering/distribution blocker remains open.
+
+## 2026-07-11 cause-specific feedback gate
+
+- Outcome schema 1.1 preserves success/failure/unknown while adding 15 explicit
+  feedback kinds across recipe, retrieval, execution, dependency, cost,
+  conflict, result, evidence, and evaluation scopes.
+- Non-recipe failures remain attributable but cannot degrade or hold a recipe.
+- Recipe failures remain bound to exact id/version/hash and use the existing
+  fail-closed degradation policy.
+- Feedback only recommends review actions; it cannot edit or promote a formal
+  recipe.
+- New rich-feedback tests: 5/5. Focused new/legacy outcome and readiness tests:
+  23/23. Broader affected regression: 110/110. Full suite: 266/266.
+- `core.py` is 15695 lines against the 15700 ceiling. Package Python source is
+  972860 bytes against the 975000 ceiling.
+
+- Sanitized public 0.2.0 wheel candidate: 211488 bytes, SHA-256
+  `fcb3e28d92b01073b147b631f7aed759de015a26c33adf5007d55d24c1c856d4`;
+  isolated governance, doctor, MCP, and Qwen service entrypoint passed.
+- Upgrade/rollback 0.1.1 -> 0.2.0 -> 0.1.1 -> 0.2.0 preserved the exact event
+  hash `dfa211f4700ce6ba7708d02233d3d4d4daac791800854c16b48ca8a42789aad2`.
+
+The 77-file sanitized export passed all 266 tests and isolated install. This
+closes competitive extension stage 1 locally; hosted-CI evidence for this change
+is still pending.

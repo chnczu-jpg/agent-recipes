@@ -65,6 +65,7 @@ from agent_recipes.migration import (
     write_migrated_schema_marker,
 )
 from agent_recipes.outcome import (
+    FEEDBACK_KIND_RULES,
     OUTCOME_POLICY,
     empty_outcome_counts,
     explicit_lock_capture_payload,
@@ -391,6 +392,7 @@ class RecipesProject:
         task: str = "",
         lock_id: str | None = None,
         idempotency_key: str | None = None,
+        feedback_kind: str | None = None,
     ) -> dict[str, Any]:
         self.ensure_dirs()
         lock: dict[str, Any] | None = None
@@ -421,7 +423,9 @@ class RecipesProject:
             "lock_id": lock_id,
         }
         if lock is not None:
-            payload.update(explicit_lock_capture_payload(lock, str(lock_id), capture_type))
+            payload.update(explicit_lock_capture_payload(lock, str(lock_id), capture_type, feedback_kind))
+        elif feedback_kind:
+            raise RecipesError("AR490", "feedback kind 必须绑定 outcome lock。", feedback_kind, "先 lookup + lock，再记录 success/failure/unknown feedback。")
         if capture_type == "failure":
             payload["problem_fingerprint"] = problem_fingerprint(task or text)
         event, idem = self.append_event(
@@ -429,7 +433,7 @@ class RecipesProject:
             payload,
             lock_id=lock_id,
             lock_exempt_reason=lock_exempt_reason,
-            idempotency_key=idempotency_key or f"capture:v2:{capture_type}:{lock_id or 'none'}:{sha256_text(text)}",
+            idempotency_key=idempotency_key or f"capture:v3:{capture_type}:{feedback_kind or 'default'}:{lock_id or 'none'}:{sha256_text(text)}",
             claim_status=claim_status(
                 verified=["已把 capture 写入 append-only events.jsonl。"],
                 cannot_claim=["不能说这条 capture 已经变成正式菜谱。"],
@@ -462,6 +466,8 @@ class RecipesProject:
             extra={
                 "event_id": event["event_id"],
                 "capture_type": capture_type,
+                "feedback_kind": stored_payload.get("feedback_kind"),
+                "feedback_scope": stored_payload.get("feedback_scope"),
                 "outcome": payload.get("outcome"),
                 "recipe_bindings": stored_payload.get("recipe_bindings", []),
                 "persistence_redaction": stored_payload.get("persistence_redaction"),
@@ -5925,15 +5931,16 @@ class RecipesProject:
         return {
             "ok": not state["binding_errors"],
             "action": "outcome-status",
-            "schema_version": "1.0",
+            "schema_version": "1.1",
             "recipe_filter": recipe_id,
             "summary": outcome_quality_summary(rows, state=state),
             "recipes": rows,
             "binding_errors": state["binding_errors"],
             "unattributed_events": state["unattributed_events"],
             "policy": dict(OUTCOME_POLICY),
+            "feedback_kinds": sorted(FEEDBACK_KIND_RULES),
             "claim_status": claim_status(
-                verified=["已按 recipe id/version/hash 统计可归因 success/failure/unknown。"],
+                verified=["已按 recipe id/version/hash 统计 outcome 和具体 feedback kind。"],
                 missing_evidence=[
                     f"有 {len(state['unattributed_events'])} 条旧结果无法追到完整 lock。"
                 ] if state["unattributed_events"] else [],

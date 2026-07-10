@@ -48,6 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
     capture_p.add_argument("--task", default="")
     capture_p.add_argument("--lock")
     capture_p.add_argument("--idempotency-key")
+    capture_p.add_argument("--feedback-kind")
     add_common(capture_p)
 
     compile_p = sub.add_parser("compile")
@@ -486,6 +487,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             task=args.task,
             lock_id=args.lock,
             idempotency_key=args.idempotency_key,
+            feedback_kind=args.feedback_kind,
         )
     if args.command == "compile":
         return project.compile(max_candidates=args.max_candidates)

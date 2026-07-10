@@ -1946,3 +1946,20 @@ Stage O 完成本机工程成熟度部分，但不伪造外部证据。项目新
 3.14 三套新 venv 完成治理链、MCP 和服务命令露出；3.11/3.13 各自跑完 261 项测试。Stage O
 没有增加核心依赖，也没有突破 15700 行/975000 字节源码预算。最后硬阻断只剩托管 CI 真实
 绿灯和第二台物理环境复现；当前没有提交、推送或公开发布，不能 claim 已关闭。
+## Competitive Extension 1: cause-specific feedback
+
+Status: implemented locally on 2026-07-11.
+
+- Keep `success`, `failure`, and `unknown` as the stable outcome layer.
+- Add cause-specific feedback for retrieval mismatch, execution error, recipe
+  error, staleness, applicability overreach, missing steps, excessive cost,
+  recipe conflict, user correction, external dependency, and blocked evidence.
+- Every outcome feedback record remains bound to the exact lock snapshot.
+- Execution, dependency, and retrieval-system failures are attributable but do
+  not automatically degrade a recipe version.
+- Recipe-policy failures may degrade or hold the exact version under the existing
+  threshold policy, but they still cannot mutate a formal recipe automatically.
+- `outcome-status` exposes feedback counts, scopes, recommended human actions,
+  and the complete supported taxonomy through CLI and MCP.
+
+Next major stage: hybrid retrieval, conflict detection, and recommendation explanations.

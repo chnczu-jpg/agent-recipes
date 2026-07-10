@@ -83,7 +83,7 @@ def initialize_result(request: dict[str, Any]) -> dict[str, Any]:
         },
         "serverInfo": {
             "name": "agent-recipes",
-            "version": "0.1.1",
+            "version": "0.2.0",
         },
         "instructions": "Use Agent Recipes tools as candidate-only helpers unless doctor claim_status says otherwise.",
     }
@@ -210,7 +210,7 @@ def tool_list() -> list[dict[str, Any]]:
         },
         {
             "name": "agent_recipes_capture",
-            "description": "Capture correction/success/failure/unknown into events.jsonl with exact lock bindings for outcomes.",
+            "description": "Capture correction/success/failure/unknown with exact lock bindings and optional cause-specific feedback.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -220,6 +220,7 @@ def tool_list() -> list[dict[str, Any]]:
                     "task": {"type": "string"},
                     "lock_id": {"type": "string"},
                     "idempotency_key": {"type": "string"},
+                    "feedback_kind": {"type": "string", "enum": ["verified_success", "partial_success", "generic_failure", "retrieval_mismatch", "execution_error", "recipe_incorrect", "recipe_outdated", "applicability_overreach", "missing_step", "excessive_cost", "recipe_conflict", "user_correction", "external_dependency", "insufficient_evidence", "evaluation_blocked"]},
                 },
                 "required": ["capture_type", "text"],
             },
@@ -868,6 +869,7 @@ def call_tool(name: str, arguments: dict[str, Any] | None = None, *, project: st
                 task=str(args.get("task", "")),
                 lock_id=args.get("lock_id"),
                 idempotency_key=args.get("idempotency_key"),
+                feedback_kind=args.get("feedback_kind"),
             )
         elif tool == "capabilities":
             result = recipes.capabilities()

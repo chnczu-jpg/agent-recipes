@@ -561,6 +561,26 @@ Status: public and hosted-CI portions passed on 2026-07-11; second-machine proof
 Next major stage: second-machine reproduction only. Compare the downloaded
 wheel hash, doctor, governance chain, MCP entrypoint, and Qwen service command.
 
+### Competitive extension 1: richer feedback than generic success/failure
+
+Status: locally implemented on 2026-07-11.
+
+- Added 15 cause-specific feedback kinds without replacing the stable
+  success/failure/unknown outcome layer.
+- Retrieval mismatch, execution error, and external dependency failures are
+  recorded against the exact lock but do not punish the recipe.
+- Incorrect, outdated, incomplete, over-broad, conflicting, corrected, or
+  excessively costly recipe use can degrade the exact version and recommend the
+  appropriate review action.
+- CLI and MCP expose the same contract. Feedback cannot directly write, accept,
+  supersede, or tombstone a formal recipe.
+- Full suite passed 266/266. The sanitized 211488-byte 0.2.0 wheel passed isolated install,
+  and a real 0.1.1/0.2.0 upgrade-rollback cycle preserved event bytes.
+- Cass still has broader implicit/session feedback. This row remains parity until
+  a fixed same-case feedback benchmark compares both contracts.
+
+Next major stage: hybrid retrieval, conflict detection, and recommendation explanations.
+
 ## Stop rules
 
 - Do not copy or analyze Cass source without written permission.
